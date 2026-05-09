@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Farmácias e Postos Próximos</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Leaflet -->
+  <link 
+    rel="stylesheet" 
+    href="https://unpkg.com/leaflet/dist/leaflet.css"
+  />
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header>
+    <h1>Locais próximos</h1>
+    <p>Encontre farmácias e postos perto de você.</p>
+    <button onclick="pegarLocalizacao()">Usar minha localização</button>
+  </header>
+
+  <main>
+    <div id="map"></div>
+
+    <section id="resultado">
+      <h2>Resultados</h2>
+      <ul id="lista"></ul>
+    </section>
+  </main>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
