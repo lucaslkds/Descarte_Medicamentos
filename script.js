@@ -2,6 +2,14 @@ let mapa;
 let grupoMarcadores;
 let buscaAtual = 0;
 
+const iconeFarmacia = L.divIcon({
+  className: "pin-farmacia",
+  html: '<div class="marcador-vermelho"></div>',
+  iconSize: [28, 42],
+  iconAnchor: [14, 28],
+  popupAnchor: [0, -28]
+});
+
 function iniciarMapa(lat = -25.4284, lon = -49.2733) {
   mapa = L.map("map").setView([lat, lon], 13);
 
@@ -195,7 +203,9 @@ async function mostrarFarmacias(farmacias, latUsuario, lonUsuario, idBusca) {
   lista.innerHTML = "";
 
   farmaciasTratadas.forEach(farmacia => {
-    const marcador = L.marker([farmacia.lat, farmacia.lon]).addTo(grupoMarcadores);
+    const marcador = L.marker([farmacia.lat, farmacia.lon], {
+  icon: iconeFarmacia
+}).addTo(grupoMarcadores);
 
     marcador.bindPopup(`
       <strong>${farmacia.nome}</strong><br>
