@@ -151,3 +151,30 @@ li a {
     width: 100%;
   }
 }
+
+.pin-farmacia {
+  background: transparent;
+  border: none;
+}
+
+.pin-farmacia .marcador-vermelho {
+  width: 28px;
+  height: 28px;
+  background: #d93025;
+  border: 2px solid white;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+  position: relative;
+}
+
+.pin-farmacia .marcador-vermelho::after {
+  content: "";
+  width: 10px;
+  height: 10px;
+  background: white;
+  border-radius: 50%;
+  position: absolute;
+  top: 7px;
+  left: 7px;
+}
