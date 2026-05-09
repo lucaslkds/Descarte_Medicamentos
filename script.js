@@ -2,7 +2,7 @@ let mapa;
 let grupoMarcadores;
 
 function iniciarMapa(lat = -25.4284, lon = -49.2733) {
-  mapa = L.map("map").setView([lat, lon], 14);
+  mapa = L.map("map").setView([lat, lon], 13);
 
   L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
     maxZoom: 19,
@@ -25,15 +25,7 @@ function pegarLocalizacao() {
       const lat = posicao.coords.latitude;
       const lon = posicao.coords.longitude;
 
-      mapa.setView([lat, lon], 15);
-      grupoMarcadores.clearLayers();
-
-      L.marker([lat, lon])
-        .addTo(grupoMarcadores)
-        .bindPopup("Você está aqui")
-        .openPopup();
-
-      buscarLocaisProximos(lat, lon);
+      centralizarBusca(lat, lon, "Você está aqui");
     },
     function() {
       alert("Não foi possível obter sua localização.");
@@ -41,7 +33,48 @@ function pegarLocalizacao() {
   );
 }
 
-function buscarLocaisProximos(lat, lon) {
+function buscarPorTexto() {
+  const localDigitado = document.getElementById("campoLocalizacao").value.trim();
+
+  if (localDigitado === "") {
+    alert("Digite uma cidade, bairro ou endereço.");
+    return;
+  }
+
+  const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(localDigitado)}`;
+
+  fetch(url)
+    .then(resposta => resposta.json())
+    .then(dados => {
+      if (dados.length === 0) {
+        alert("Localização não encontrada.");
+        return;
+      }
+
+      const lat = parseFloat(dados[0].lat);
+      const lon = parseFloat(dados[0].lon);
+
+      centralizarBusca(lat, lon, localDigitado);
+    })
+    .catch(erro => {
+      console.error(erro);
+      alert("Erro ao buscar a localização digitada.");
+    });
+}
+
+function centralizarBusca(lat, lon, texto) {
+  mapa.setView([lat, lon], 15);
+  grupoMarcadores.clearLayers();
+
+  L.marker([lat, lon])
+    .addTo(grupoMarcadores)
+    .bindPopup(texto)
+    .openPopup();
+
+  buscarFarmaciasProximas(lat, lon);
+}
+
+function buscarFarmaciasProximas(lat, lon) {
   const raio = 3000;
 
   const consulta = `
@@ -50,10 +83,6 @@ function buscarLocaisProximos(lat, lon) {
       node["amenity"="pharmacy"](around:${raio},${lat},${lon});
       way["amenity"="pharmacy"](around:${raio},${lat},${lon});
       relation["amenity"="pharmacy"](around:${raio},${lat},${lon});
-
-      node["amenity"="fuel"](around:${raio},${lat},${lon});
-      way["amenity"="fuel"](around:${raio},${lat},${lon});
-      relation["amenity"="fuel"](around:${raio},${lat},${lon});
     );
     out center;
   `;
@@ -63,50 +92,77 @@ function buscarLocaisProximos(lat, lon) {
     body: consulta
   })
     .then(resposta => resposta.json())
-    .then(dados => mostrarLocais(dados.elements, lat, lon))
+    .then(dados => mostrarFarmacias(dados.elements, lat, lon))
     .catch(erro => {
       console.error(erro);
-      alert("Erro ao buscar locais próximos.");
+      alert("Erro ao buscar farmácias próximas.");
     });
 }
 
-function mostrarLocais(locais, latUsuario, lonUsuario) {
+function mostrarFarmacias(farmacias, latUsuario, lonUsuario) {
   const lista = document.getElementById("lista");
   lista.innerHTML = "";
 
-  locais.forEach(local => {
-    const lat = local.lat || local.center?.lat;
-    const lon = local.lon || local.center?.lon;
+  if (farmacias.length === 0) {
+    lista.innerHTML = "<li>Nenhuma farmácia encontrada nessa região.</li>";
+    return;
+  }
 
-    if (!lat || !lon) return;
+  const farmaciasTratadas = farmacias
+    .map(farmacia => {
+      const lat = farmacia.lat || farmacia.center?.lat;
+      const lon = farmacia.lon || farmacia.center?.lon;
 
-    const nome = local.tags?.name || "Local sem nome";
-    const tipo = local.tags?.amenity === "pharmacy" ? "Farmácia" : "Posto";
-    const distancia = calcularDistancia(latUsuario, lonUsuario, lat, lon);
+      if (!lat || !lon) return null;
 
-    const marcador = L.marker([lat, lon]).addTo(grupoMarcadores);
+      return {
+        nome: farmacia.tags?.name || "Farmácia sem nome",
+        endereco: montarEndereco(farmacia.tags),
+        lat,
+        lon,
+        distancia: calcularDistancia(latUsuario, lonUsuario, lat, lon)
+      };
+    })
+    .filter(farmacia => farmacia !== null)
+    .sort((a, b) => a.distancia - b.distancia);
+
+  farmaciasTratadas.forEach(farmacia => {
+    const marcador = L.marker([farmacia.lat, farmacia.lon]).addTo(grupoMarcadores);
 
     marcador.bindPopup(`
-      <strong>${nome}</strong><br>
-      ${tipo}<br>
-      ${distancia.toFixed(1)} km<br>
-      <a href="https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}" target="_blank">
+      <strong>${farmacia.nome}</strong><br>
+      ${farmacia.endereco}<br>
+      ${farmacia.distancia.toFixed(1)} km<br>
+      <a href="https://www.google.com/maps/dir/?api=1&destination=${farmacia.lat},${farmacia.lon}" target="_blank">
         Ver rota
       </a>
     `);
 
     const item = document.createElement("li");
     item.innerHTML = `
-      <strong>${nome}</strong><br>
-      ${tipo}<br>
-      ${distancia.toFixed(1)} km<br>
-      <a href="https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}" target="_blank">
+      <strong>${farmacia.nome}</strong><br>
+      ${farmacia.endereco}<br>
+      ${farmacia.distancia.toFixed(1)} km<br>
+      <a href="https://www.google.com/maps/dir/?api=1&destination=${farmacia.lat},${farmacia.lon}" target="_blank">
         Ver rota no Google Maps
       </a>
     `;
 
     lista.appendChild(item);
   });
+}
+
+function montarEndereco(tags) {
+  if (!tags) return "Endereço não informado";
+
+  const rua = tags["addr:street"] || "";
+  const numero = tags["addr:housenumber"] || "";
+  const bairro = tags["addr:suburb"] || "";
+  const cidade = tags["addr:city"] || "";
+
+  const endereco = `${rua} ${numero} ${bairro} ${cidade}`.trim();
+
+  return endereco || "Endereço não informado";
 }
 
 function calcularDistancia(lat1, lon1, lat2, lon2) {
