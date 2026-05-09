@@ -5,6 +5,7 @@
   <title>Descarte de Medicamentos</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+  <!-- Leaflet -->
   <link 
     rel="stylesheet" 
     href="https://unpkg.com/leaflet/dist/leaflet.css"
@@ -16,7 +17,7 @@
 
   <header>
     <h1>Descarte de Medicamentos</h1>
-    <p>Encontre farmácias próximas para orientação sobre descarte correto.</p>
+    <p>Encontre farmácias próximas e consulte a melhor rota.</p>
 
     <div class="busca">
       <input 
@@ -24,10 +25,16 @@
         id="campoLocalizacao" 
         placeholder="Digite sua cidade, bairro ou endereço"
       >
-      <button onclick="buscarPorTexto()">Buscar</button>
+      <button id="botaoBuscar" onclick="buscarPorTexto()">Buscar</button>
     </div>
 
-    <button onclick="pegarLocalizacao()">Usar minha localização atual</button>
+    <button id="botaoLocalizacao" onclick="pegarLocalizacao()">
+      Usar minha localização atual
+    </button>
+
+    <p class="aviso">
+      Antes de levar medicamentos, confirme com a farmácia se ela possui ponto de coleta.
+    </p>
   </header>
 
   <main>
@@ -35,6 +42,7 @@
 
     <section id="resultado">
       <h2>Farmácias próximas</h2>
+      <p id="status">Digite uma localização ou use sua localização atual.</p>
       <ul id="lista"></ul>
     </section>
   </main>
